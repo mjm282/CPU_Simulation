@@ -77,6 +77,18 @@ int trace_get_item(struct trace_item **item)
 
 int main(int argc, char **argv)
 {
+  
+  //creating a "pipeline" struct to store the entries that are in each stage of the pipeline
+  struct pipeline {
+	  struct trace_item *IF;
+	  struct trace_item *ID;
+	  struct trace_item *EX;
+	  struct trace_item *MEM;
+	  struct trace_item *WB;
+  }
+  struct pipeline *tr_pipeline;
+  
+  
   struct trace_item *tr_entry;
   size_t size;
   char *trace_file_name;
@@ -91,14 +103,14 @@ int main(int argc, char **argv)
 
   unsigned int cycle_number = 0;
 
-  if (argc == 1) {
-    fprintf(stdout, "\nUSAGE: tv <trace_file> <switch - any character>\n");
+  if (argc < 3) {
+    fprintf(stdout, "\nUSAGE: tv <trace_file> <prediction method> <switch - any character>\n");
     fprintf(stdout, "\n(switch) to turn on or off individual item view.\n\n");
     exit(0);
   }
     
   trace_file_name = argv[1];
-  if (argc == 3) trace_view_on = atoi(argv[2]) ;
+  if (argc == 4) trace_view_on = atoi(argv[3]) ;
 
   fprintf(stdout, "\n ** opening file %s\n", trace_file_name);
 
@@ -128,47 +140,81 @@ int main(int argc, char **argv)
       t_Addr = tr_entry->Addr;
     }  
 
+	//PIPELINED SIMULATION: START
+	//switch/case the same as single cycle, statements will vary due to pipelining
+	
+	if (trace_view_on){
+		switch(tr_entry -> type) {
+			case ti_NOP:
+			break;
+			
+			case ti_RTYPE:
+			break;
+			
+			case ti_ITYPE:
+			break;
+			
+			case ti_LOAD:
+			break;
+			
+			case ti_STORE:
+			break;
+			
+			case ti_BRANCH:
+			break;
+			
+			case ti_JTYPE:
+			break;
+			
+			case ti_SPECIAL:
+			break;
+			
+			case ti_JRTYPE:
+			break;			
+		}
+	}
+	
 // SIMULATION OF A SINGLE CYCLE cpu IS TRIVIAL - EACH INSTRUCTION IS EXECUTED
 // IN ONE CYCLE
 
-    if (trace_view_on) {/* print the executed instruction if trace_view_on=1 */
-      switch(tr_entry->type) {
-        case ti_NOP:
-          printf("[cycle %d] NOP:",cycle_number) ;
-          break;
-        case ti_RTYPE:
-          printf("[cycle %d] RTYPE:",cycle_number) ;
-          printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->dReg);
-          break;
-        case ti_ITYPE:
-          printf("[cycle %d] ITYPE:",cycle_number) ;
-          printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->dReg, tr_entry->Addr);
-          break;
-        case ti_LOAD:
-          printf("[cycle %d] LOAD:",cycle_number) ;      
-          printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->dReg, tr_entry->Addr);
-          break;
-        case ti_STORE:
-          printf("[cycle %d] STORE:",cycle_number) ;      
-          printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->Addr);
-          break;
-        case ti_BRANCH:
-          printf("[cycle %d] BRANCH:",cycle_number) ;
-          printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->Addr);
-          break;
-        case ti_JTYPE:
-          printf("[cycle %d] JTYPE:",cycle_number) ;
-          printf(" (PC: %x)(addr: %x)\n", tr_entry->PC,tr_entry->Addr);
-          break;
-        case ti_SPECIAL:
-          printf("[cycle %d] SPECIAL:",cycle_number) ;      	
-          break;
-        case ti_JRTYPE:
-          printf("[cycle %d] JRTYPE:",cycle_number) ;
-          printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_entry->PC, tr_entry->dReg, tr_entry->Addr);
-          break;
-      }
-    }
+    // if (trace_view_on) {/* print the executed instruction if trace_view_on=1 */
+      // switch(tr_entry->type) {
+        // case ti_NOP:
+          // printf("[cycle %d] NOP:",cycle_number) ;
+          // break;
+        // case ti_RTYPE:
+          // printf("[cycle %d] RTYPE:",cycle_number) ;
+          // printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->dReg);
+          // break;
+        // case ti_ITYPE:
+          // printf("[cycle %d] ITYPE:",cycle_number) ;
+          // printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->dReg, tr_entry->Addr);
+          // break;
+        // case ti_LOAD:
+          // printf("[cycle %d] LOAD:",cycle_number) ;      
+          // printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->dReg, tr_entry->Addr);
+          // break;
+        // case ti_STORE:
+          // printf("[cycle %d] STORE:",cycle_number) ;      
+          // printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->Addr);
+          // break;
+        // case ti_BRANCH:
+          // printf("[cycle %d] BRANCH:",cycle_number) ;
+          // printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->Addr);
+          // break;
+        // case ti_JTYPE:
+          // printf("[cycle %d] JTYPE:",cycle_number) ;
+          // printf(" (PC: %x)(addr: %x)\n", tr_entry->PC,tr_entry->Addr);
+          // break;
+        // case ti_SPECIAL:
+          // printf("[cycle %d] SPECIAL:",cycle_number) ;      	
+          // break;
+        // case ti_JRTYPE:
+          // printf("[cycle %d] JRTYPE:",cycle_number) ;
+          // printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_entry->PC, tr_entry->dReg, tr_entry->Addr);
+          // break;
+      // }
+    // }
   }
 
   trace_uninit();
