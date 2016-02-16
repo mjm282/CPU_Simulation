@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 	  struct trace_item *EX;
 	  struct trace_item *MEM;
 	  struct trace_item *WB;
-  }
+  };  //typo correction
   struct pipeline *tr_pipeline;
   
   
@@ -122,6 +122,8 @@ int main(int argc, char **argv)
   }
 
   trace_init();
+  
+  int stall = 0;  //if stall is 0, get new instruction; if not, continue with previous instruction
 
   while(1) {
     size = trace_get_item(&tr_entry);
