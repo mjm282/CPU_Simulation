@@ -146,17 +146,16 @@ int main(int argc, char **argv)
   		//NOT CURRENTLY IN USE
 
   while(1) {
+    cycle_number++;
     if(stall == 0)
     {
       size = trace_get_item(&tr_entry);
     }
    
     if (!size) {       /* no more instructions (trace_items) to simulate */
-      printf("+ Simulation terminates at cycle : %u\n", cycle_number);
-      break;
+      tr_entry = &no_op;
     }
     else{              /* parse the next instruction to simulate */
-      cycle_number++;
       t_type = tr_entry->type;
       t_sReg_a = tr_entry->sReg_a;
       t_sReg_b = tr_entry->sReg_b;
@@ -176,37 +175,38 @@ int main(int argc, char **argv)
            break;
          case ti_RTYPE:
            printf("[cycle %d] RTYPE:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->dReg);
+           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->sReg_b, tr_pipeline->WB->dReg);
            break;
          case ti_ITYPE:
            printf("[cycle %d] ITYPE:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->dReg, tr_entry->Addr);
+           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->dReg, tr_pipeline->WB->Addr);
            break;
          case ti_LOAD:
            printf("[cycle %d] LOAD:",cycle_number) ;      
-           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->dReg, tr_entry->Addr);
+           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->dReg, tr_pipeline->WB->Addr);
            break;
          case ti_STORE:
            printf("[cycle %d] STORE:",cycle_number) ;      
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->Addr);
+           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->sReg_b, tr_pipeline->WB->Addr);
            break;
          case ti_BRANCH:
            printf("[cycle %d] BRANCH:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_entry->PC, tr_entry->sReg_a, tr_entry->sReg_b, tr_entry->Addr);
+           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->sReg_b, tr_pipeline->WB->Addr);
            break;
          case ti_JTYPE:
            printf("[cycle %d] JTYPE:",cycle_number) ;
-           printf(" (PC: %x)(addr: %x)\n", tr_entry->PC,tr_entry->Addr);
+           printf(" (PC: %x)(addr: %x)\n", tr_pipeline->WB->PC,tr_pipeline->WB->Addr);
            break;
          case ti_SPECIAL:
            printf("[cycle %d] SPECIAL:",cycle_number) ;      	
            break;
          case ti_JRTYPE:
            printf("[cycle %d] JRTYPE:",cycle_number) ;
-           printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_entry->PC, tr_entry->dReg, tr_entry->Addr);
+           printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->dReg, tr_pipeline->WB->Addr);
            break;
        }
      }
+
      
      //push everything else along
      
@@ -242,8 +242,14 @@ int main(int argc, char **argv)
 		break;			*/
 		
 		default:
-		tr_pipeline->ID = tr_entry;
+		tr_pipeline->IF = tr_entry;
 		break;
+	}
+	
+	if( tr_pipeline->IF->type == ti_NOP && tr_pipeline->ID->type == ti_NOP && tr_pipeline->EX->type == ti_NOP &&  tr_pipeline->MEM->type == ti_NOP  &&  tr_pipeline->WB->type == ti_NOP  )
+	{
+		printf("+ Simulation terminates at cycle : %u\n", cycle_number);
+      		break;
 	}
 	
 	
