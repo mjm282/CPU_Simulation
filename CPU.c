@@ -25,19 +25,38 @@ struct pipeline {
   struct trace_item *EX;
   struct trace_item *MEM;
   struct trace_item *WB;
-};  
-  
-  //implementation of the branch prediction hash table
+};  	
+
 unsigned int pred_table[128];
-int i;
-for(i = 0; i < 128; i++) pred_table[i] = NULL;
-	 
-int check_pred(uint32_t addr)
+ //implementation of the branch prediction hash table
+void table_init()
 {
+	int i;
+	for(i = 0; i < 128; i++) pred_table[(int)i] = NULL;
+}
+int check_pred(uint32_t addr, uint32_t pc, int tp)
+{
+	int pred_c; //whether or not the prediction was correct
+	int pred_value; //the prediction of whether or not to branch (0 = don't branch, 1 = branch)
+	int branch_value; //whether or not the program actually branched, the value that will be put in the table
 	unsigned char hash;
-	hash = (addr >> 4) & 0x7f;
+	hash = (addr >> 4) & 0x7f; //index in the hash table, the 7 bits after/including the 4th bits (4-10)
 	
-	if(
+	if(tp == 0) pred_value = 0; //if we're using prediction method 0, pred_value will always be 0
+	else if(tp == 1){
+		if(pred_table[(int)hash] == NULL) pred_value = 0;
+		else pred_value = pred_table[(int)hash];
+	}
+	
+	if(addr == pc) branch_value = 1;
+	else branch_value = 0;
+	
+	if(tp == 1) pred_table[(int)hash] = branch_value;
+	
+	if(branch_value == pred_value) pred_c = 1;
+	else pred_c = 0;
+	
+	return pred_c;
 }
   
 int is_big_endian(void)
@@ -100,8 +119,12 @@ int trace_get_item(struct trace_item **item)
 
 int main(int argc, char **argv)
 {
+  int pred_miss = 0; //int used to judge whether or not a prediction was missed (used later on)
+  int sq_count = 0;
   struct pipeline templine;
   struct trace_item no_op;
+  struct trace_item squashed;
+  squashed.type = ti_SQUASHED;
   no_op.type = ti_NOP;
   templine.IF = &no_op;
   templine.ID = &no_op;
@@ -111,7 +134,7 @@ int main(int argc, char **argv)
   
   struct pipeline *tr_pipeline;
   tr_pipeline = &templine;
-  
+  table_init();
   //fill pipeline with nops to start
   
 
@@ -128,7 +151,7 @@ int main(int argc, char **argv)
   int trace_view_on = 0;
   
   //used to handle branch prediction method. Defaults to 0 with nothing entered
-  int trace_prediction = 0;
+  int trace_prediction_on = 0;
   
   unsigned char t_type = 0;
   unsigned char t_sReg_a= 0;
@@ -146,8 +169,10 @@ int main(int argc, char **argv)
   }
     
   trace_file_name = argv[1];
-  if (argc == 4) trace_view_on = atoi(argv[3]) ;
-
+  if (argc == 4){ 
+	trace_view_on = atoi(argv[3]) ;
+	trace_prediction_on = atoi(argv[2]);
+  }
   fprintf(stdout, "\n ** opening file %s\n", trace_file_name);
 
   trace_fd = fopen(trace_file_name, "rb");
@@ -160,7 +185,7 @@ int main(int argc, char **argv)
   trace_init();
   
   int stall = 0;  //if stall is 0, get new instruction; if not, continue with previous instruction
-
+  
   while(1) {
     cycle_number++;
     if(stall == 0)
@@ -180,7 +205,7 @@ int main(int argc, char **argv)
       t_Addr = tr_entry->Addr;
     }
 	
-	stall = 0;
+	if (stall > 0) stall--;
 
 	//PIPELINED SIMULATION: START
 	//switch/case the same as single cycle, statements will vary due to pipelining
@@ -192,7 +217,7 @@ int main(int argc, char **argv)
            printf("[cycle %d] NOP:\n",cycle_number) ;
            break;
 		 case ti_SQUASHED:
-		   printf("[cycle %d] SQUASHED: \n", cycle_number);
+		   printf("[cycle %d] SQUASHED:\n", cycle_number);
 		   break;
          case ti_RTYPE:
            printf("[cycle %d] RTYPE:",cycle_number) ;
@@ -219,7 +244,7 @@ int main(int argc, char **argv)
            printf(" (PC: %x)(addr: %x)\n", tr_pipeline->WB->PC,tr_pipeline->WB->Addr);
            break;
          case ti_SPECIAL:
-           printf("[cycle %d] SPECIAL:",cycle_number) ;      	
+           printf("[cycle %d] SPECIAL:\n",cycle_number) ;      	
            break;
          case ti_JRTYPE:
            printf("[cycle %d] JRTYPE:",cycle_number) ;
@@ -227,64 +252,42 @@ int main(int argc, char **argv)
            break;
        }
      }
-
-	 //replaced original pushing along of the pipe to another switch statement that accounts for data hazards
 	 
-     switch(tr_pipeline->EX->type){
+	 int tr_pred;
+	 //replaced original pushing along of the pipe to another switch statement that accounts for data hazards 
+	 tr_pipeline->WB = tr_pipeline->MEM;
+	 tr_pipeline->MEM = tr_pipeline->EX;
+	 switch(tr_pipeline->EX->type){
 		 case ti_LOAD:
-		   tr_pipeline->WB = tr_pipeline->MEM;
-		   tr_pipeline->MEM = tr_pipeline->EX;
 		   //stalls the ID stage, replacing EX with a NOP if there's a load-use hazard
 		   if(tr_pipeline->EX->dReg == tr_pipeline->ID->sReg_a || tr_pipeline->EX->dReg == tr_pipeline->ID->sReg_b)
 		   {
 			   tr_pipeline->EX = &no_op;
 			   stall = 1;
 		   }
-		   break;
+		 break;
 		 
-		 default:
-		   tr_pipeline->WB = tr_pipeline->MEM;
-		   tr_pipeline->MEM = tr_pipeline->EX;
-		   tr_pipeline->EX = tr_pipeline->ID;
-		   tr_pipeline->ID = tr_pipeline->IF;
-		   tr_pipeline->IF = tr_entry;
+		 case ti_BRANCH:
+		   tr_pred = check_pred(tr_pipeline->EX->Addr, tr_pipeline->ID->PC, trace_prediction_on);
+		   if(tr_pred == 0)
+		   {
+			   stall = 3;
+			   tr_pipeline->EX = &squashed;
+		   }   
 		   break;
 	 }
-	/*switch(tr_entry -> type) {   
-		case ti_NOP;
-		break;
-		
-		case ti_RTYPE:
-			if(
-		break;
-		
-		case ti_ITYPE:
-		break;
-		
-		case ti_LOAD:
-		break;
-		
-		case ti_STORE:
-		break;
-		
-		case ti_BRANCH:
-		break;
-		
-		case ti_JTYPE:
-		break;
-		
-		case ti_SPECIAL:
-		break;
-		
-		case ti_JRTYPE:
-		break;			
-		
-		default:
-		tr_pipeline->IF = tr_entry;
-		break;
-	}
-	*/
-	
+	 if(stall == 0)
+	 {
+		 tr_pipeline->EX = tr_pipeline->ID;
+		 tr_pipeline->ID = tr_pipeline->IF;
+		 tr_pipeline->IF = tr_entry;
+	 }
+	 else if(stall == 2)
+	 {
+		 tr_pipeline->EX = &squashed;
+		 stall = 0;
+	 }
+	 
 	if( tr_pipeline->IF->type == ti_NOP && tr_pipeline->ID->type == ti_NOP && tr_pipeline->EX->type == ti_NOP &&  tr_pipeline->MEM->type == ti_NOP  &&  tr_pipeline->WB->type == ti_NOP  )
 	{
 		printf("+ Simulation terminates at cycle : %u\n", cycle_number);
