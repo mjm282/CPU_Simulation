@@ -85,9 +85,28 @@ int main(int argc, char **argv)
 	  struct trace_item *EX;
 	  struct trace_item *MEM;
 	  struct trace_item *WB;
-  }
-  struct pipeline *tr_pipeline;
+  };  //typo correction
+  struct pipeline templine;
+  struct trace_item no_op;
+  no_op.type = ti_NOP;
+  templine.IF = &no_op;
+  templine.ID = &no_op;
+  templine.EX = &no_op;
+  templine.MEM = &no_op;
+  templine.WB = &no_op;
   
+  struct pipeline *tr_pipeline;
+  tr_pipeline = &templine;
+  
+  //fill pipeline with nops to start
+  
+
+  
+  /*tr_pipeline->IF->type = ti_NOP;
+  tr_pipeline->ID->type = ti_NOP;
+  tr_pipeline->EX->type = ti_NOP;
+  tr_pipeline->MEM->type = ti_NOP;
+  tr_pipeline->WB->type = ti_NOP;*/
   
   struct trace_item *tr_entry;
   size_t size;
@@ -122,16 +141,21 @@ int main(int argc, char **argv)
   }
 
   trace_init();
+  
+  int stall = 0;  //if stall is 0, get new instruction; if not, continue with previous instruction
+  		//NOT CURRENTLY IN USE
 
   while(1) {
-    size = trace_get_item(&tr_entry);
+    cycle_number++;
+    if(stall == 0)
+    {
+      size = trace_get_item(&tr_entry);
+    }
    
     if (!size) {       /* no more instructions (trace_items) to simulate */
-      printf("+ Simulation terminates at cycle : %u\n", cycle_number);
-      break;
+      tr_entry = &no_op;
     }
     else{              /* parse the next instruction to simulate */
-      cycle_number++;
       t_type = tr_entry->type;
       t_sReg_a = tr_entry->sReg_a;
       t_sReg_b = tr_entry->sReg_b;
@@ -143,36 +167,91 @@ int main(int argc, char **argv)
 	//PIPELINED SIMULATION: START
 	//switch/case the same as single cycle, statements will vary due to pipelining
 	
-	if (trace_view_on){
-		switch(tr_entry -> type) {
-			case ti_NOP:
-			break;
-			
-			case ti_RTYPE:
-			break;
-			
-			case ti_ITYPE:
-			break;
-			
-			case ti_LOAD:
-			break;
-			
-			case ti_STORE:
-			break;
-			
-			case ti_BRANCH:
-			break;
-			
-			case ti_JTYPE:
-			break;
-			
-			case ti_SPECIAL:
-			break;
-			
-			case ti_JRTYPE:
-			break;			
-		}
+	//Print what's in the WB stage
+    if (trace_view_on) {/* print the executed instruction if trace_view_on=1 */
+       switch(tr_pipeline->WB->type) {
+         case ti_NOP:
+           printf("[cycle %d] NOP:\n",cycle_number) ;
+           break;
+         case ti_RTYPE:
+           printf("[cycle %d] RTYPE:",cycle_number) ;
+           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->sReg_b, tr_pipeline->WB->dReg);
+           break;
+         case ti_ITYPE:
+           printf("[cycle %d] ITYPE:",cycle_number) ;
+           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->dReg, tr_pipeline->WB->Addr);
+           break;
+         case ti_LOAD:
+           printf("[cycle %d] LOAD:",cycle_number) ;      
+           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->dReg, tr_pipeline->WB->Addr);
+           break;
+         case ti_STORE:
+           printf("[cycle %d] STORE:",cycle_number) ;      
+           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->sReg_b, tr_pipeline->WB->Addr);
+           break;
+         case ti_BRANCH:
+           printf("[cycle %d] BRANCH:",cycle_number) ;
+           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->sReg_b, tr_pipeline->WB->Addr);
+           break;
+         case ti_JTYPE:
+           printf("[cycle %d] JTYPE:",cycle_number) ;
+           printf(" (PC: %x)(addr: %x)\n", tr_pipeline->WB->PC,tr_pipeline->WB->Addr);
+           break;
+         case ti_SPECIAL:
+           printf("[cycle %d] SPECIAL:",cycle_number) ;      	
+           break;
+         case ti_JRTYPE:
+           printf("[cycle %d] JRTYPE:",cycle_number) ;
+           printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_pipeline->WB->PC, tr_pipeline->WB->dReg, tr_pipeline->WB->Addr);
+           break;
+       }
+     }
+
+     
+     //push everything else along
+     
+     tr_pipeline->WB = tr_pipeline->MEM;
+     tr_pipeline->MEM = tr_pipeline->EX;
+     tr_pipeline->EX = tr_pipeline->ID;
+     tr_pipeline->ID = tr_pipeline->IF;
+
+	
+	switch(tr_entry -> type) {   
+		/*case ti_RTYPE:
+		break;
+		
+		case ti_ITYPE:
+		break;
+		
+		case ti_LOAD:
+		break;
+		
+		case ti_STORE:
+		break;
+		
+		case ti_BRANCH:
+		break;
+		
+		case ti_JTYPE:
+		break;
+		
+		case ti_SPECIAL:
+		break;
+		
+		case ti_JRTYPE:
+		break;			*/
+		
+		default:
+		tr_pipeline->IF = tr_entry;
+		break;
 	}
+	
+	if( tr_pipeline->IF->type == ti_NOP && tr_pipeline->ID->type == ti_NOP && tr_pipeline->EX->type == ti_NOP &&  tr_pipeline->MEM->type == ti_NOP  &&  tr_pipeline->WB->type == ti_NOP  )
+	{
+		printf("+ Simulation terminates at cycle : %u\n", cycle_number);
+      		break;
+	}
+	
 	
 // SIMULATION OF A SINGLE CYCLE cpu IS TRIVIAL - EACH INSTRUCTION IS EXECUTED
 // IN ONE CYCLE
