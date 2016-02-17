@@ -17,6 +17,29 @@ static int trace_buf_ptr;
 static int trace_buf_end;
 static struct trace_item *trace_buf;
 
+  //creating a "pipeline" struct to store the entries that are in each stage of the pipeline
+  //moved pipeline struct out of the main method to make it a little cleaner, no changes to functionality
+struct pipeline {
+  struct trace_item *IF;
+  struct trace_item *ID;
+  struct trace_item *EX;
+  struct trace_item *MEM;
+  struct trace_item *WB;
+};  
+  
+  //implementation of the branch prediction hash table
+unsigned int pred_table[128];
+int i;
+for(i = 0; i < 128; i++) pred_table[i] = NULL;
+	 
+int check_pred(uint32_t addr)
+{
+	unsigned char hash;
+	hash = (addr >> 4) & 0x7f;
+	
+	if(
+}
+  
 int is_big_endian(void)
 {
     union {
@@ -77,15 +100,6 @@ int trace_get_item(struct trace_item **item)
 
 int main(int argc, char **argv)
 {
-  
-  //creating a "pipeline" struct to store the entries that are in each stage of the pipeline
-  struct pipeline {
-	  struct trace_item *IF;
-	  struct trace_item *ID;
-	  struct trace_item *EX;
-	  struct trace_item *MEM;
-	  struct trace_item *WB;
-  };  //typo correction
   struct pipeline templine;
   struct trace_item no_op;
   no_op.type = ti_NOP;
@@ -112,6 +126,9 @@ int main(int argc, char **argv)
   size_t size;
   char *trace_file_name;
   int trace_view_on = 0;
+  
+  //used to handle branch prediction method. Defaults to 0 with nothing entered
+  int trace_prediction = 0;
   
   unsigned char t_type = 0;
   unsigned char t_sReg_a= 0;
@@ -143,7 +160,6 @@ int main(int argc, char **argv)
   trace_init();
   
   int stall = 0;  //if stall is 0, get new instruction; if not, continue with previous instruction
-  		//NOT CURRENTLY IN USE
 
   while(1) {
     cycle_number++;
@@ -162,7 +178,9 @@ int main(int argc, char **argv)
       t_dReg = tr_entry->dReg;
       t_PC = tr_entry->PC;
       t_Addr = tr_entry->Addr;
-    }  
+    }
+	
+	stall = 0;
 
 	//PIPELINED SIMULATION: START
 	//switch/case the same as single cycle, statements will vary due to pipelining
@@ -173,6 +191,9 @@ int main(int argc, char **argv)
          case ti_NOP:
            printf("[cycle %d] NOP:\n",cycle_number) ;
            break;
+		 case ti_SQUASHED:
+		   printf("[cycle %d] SQUASHED: \n", cycle_number);
+		   break;
          case ti_RTYPE:
            printf("[cycle %d] RTYPE:",cycle_number) ;
            printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_pipeline->WB->PC, tr_pipeline->WB->sReg_a, tr_pipeline->WB->sReg_b, tr_pipeline->WB->dReg);
@@ -207,17 +228,34 @@ int main(int argc, char **argv)
        }
      }
 
-     
-     //push everything else along
-     
-     tr_pipeline->WB = tr_pipeline->MEM;
-     tr_pipeline->MEM = tr_pipeline->EX;
-     tr_pipeline->EX = tr_pipeline->ID;
-     tr_pipeline->ID = tr_pipeline->IF;
-
-	
-	switch(tr_entry -> type) {   
-		/*case ti_RTYPE:
+	 //replaced original pushing along of the pipe to another switch statement that accounts for data hazards
+	 
+     switch(tr_pipeline->EX->type){
+		 case ti_LOAD:
+		   tr_pipeline->WB = tr_pipeline->MEM;
+		   tr_pipeline->MEM = tr_pipeline->EX;
+		   //stalls the ID stage, replacing EX with a NOP if there's a load-use hazard
+		   if(tr_pipeline->EX->dReg == tr_pipeline->ID->sReg_a || tr_pipeline->EX->dReg == tr_pipeline->ID->sReg_b)
+		   {
+			   tr_pipeline->EX = &no_op;
+			   stall = 1;
+		   }
+		   break;
+		 
+		 default:
+		   tr_pipeline->WB = tr_pipeline->MEM;
+		   tr_pipeline->MEM = tr_pipeline->EX;
+		   tr_pipeline->EX = tr_pipeline->ID;
+		   tr_pipeline->ID = tr_pipeline->IF;
+		   tr_pipeline->IF = tr_entry;
+		   break;
+	 }
+	/*switch(tr_entry -> type) {   
+		case ti_NOP;
+		break;
+		
+		case ti_RTYPE:
+			if(
 		break;
 		
 		case ti_ITYPE:
@@ -239,12 +277,13 @@ int main(int argc, char **argv)
 		break;
 		
 		case ti_JRTYPE:
-		break;			*/
+		break;			
 		
 		default:
 		tr_pipeline->IF = tr_entry;
 		break;
 	}
+	*/
 	
 	if( tr_pipeline->IF->type == ti_NOP && tr_pipeline->ID->type == ti_NOP && tr_pipeline->EX->type == ti_NOP &&  tr_pipeline->MEM->type == ti_NOP  &&  tr_pipeline->WB->type == ti_NOP  )
 	{
