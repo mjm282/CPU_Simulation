@@ -119,8 +119,6 @@ int trace_get_item(struct trace_item **item)
 
 int main(int argc, char **argv)
 {
-  int pred_miss = 0; //int used to judge whether or not a prediction was missed (used later on)
-  int sq_count = 0;
   struct pipeline templine;
   struct trace_item no_op;
   struct trace_item squashed;
