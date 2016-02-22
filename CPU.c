@@ -160,13 +160,16 @@ int main(int argc, char **argv)
 
   unsigned int cycle_number = 0;
 
-  if (argc < 3) {
+  if (argc == 1) {
     fprintf(stdout, "\nUSAGE: tv <trace_file> <prediction method> <switch - any character>\n");
     fprintf(stdout, "\n(switch) to turn on or off individual item view.\n\n");
     exit(0);
   }
     
   trace_file_name = argv[1];
+  if (argc == 3){
+  	trace_prediction_on = atoi(argv[2]);
+  }
   if (argc == 4){ 
 	trace_view_on = atoi(argv[3]) ;
 	trace_prediction_on = atoi(argv[2]);
