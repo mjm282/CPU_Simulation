@@ -1,0 +1,60 @@
+Analysis of Simulation
+
+*************************************************************Short Traces:*******************************************************************
+sample.tr
+	Single-Cycle:  1000 cycles
+	5-Stage Pipeline (predict not taken): 1097
+	5-Stage Pipeline (prediction table): 1081
+	Superscalar Pipeline (predict not taken): 952
+	Superscalar Pipeline (prediction table): 936
+	
+	
+sample1.tr
+	Single-Cycle: 1000000
+	5-Stage Pipeline (predict not taken): 1197969
+	5-Stage Pipeline (prediction table): 1127547
+	Superscalar Pipeline (predict not taken): 1121346
+	Superscalar Pipeline (prediction table): 1016522
+	
+sample2.tr
+	Single-Cycle: 1000000
+	5-Stage Pipeline (predict not taken): 1135056
+	5-Stage Pipeline (prediction table): 1131681
+	Superscalar Pipeline (predict not taken): 974854
+	Superscalar Pipeline (prediction table): 956909
+	
+sample3.tr
+	Single-Cycle: 1000000
+	5-Stage Pipeline (predict not taken): 1230021
+	5-Stage Pipeline (prediction table): 1229512
+	Superscalar Pipeline (predict not taken): 1085450
+	Superscalar Pipeline (prediction table): 1080131
+	
+sample4.tr
+	Single-Cycle: 3000000
+	5-Stage Pipeline (predict not taken): 3563036
+	5-Stage Pipeline (prediction table): 3488736
+	Superscalar Pipeline (predict not taken): 3181641
+	Superscalar Pipeline (prediction table): 3053560
+	
+*************************************************************Long Traces:*******************************************************************
+sample_large1.tr
+	Single-Cycle: 93672789
+	5-Stage Pipeline (predict not taken): 105285391
+	5-Stage Pipeline (prediction table): 102714570
+	Superscalar Pipeline (predict not taken): 87038239
+	Superscalar Pipeline (prediction table): 82754789
+	
+sample_large2.tr
+	Single-Cycle: 93672789
+	5-Stage Pipeline (predict not taken): 115345467
+	5-Stage Pipeline (prediction table): 112770369
+	Superscalar Pipeline (predict not taken): 100859309
+	Superscalar Pipeline (prediction table): 98082922
+	
+sample_large3.tr
+	Single-Cycle: 93672789
+	5-Stage Pipeline (predict not taken): 106555143
+	5-Stage Pipeline (prediction table): 104920486
+	Superscalar Pipeline (predict not taken): 98082922
+	Superscalar Pipeline (prediction table): 90793651

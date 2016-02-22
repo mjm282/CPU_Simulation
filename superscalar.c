@@ -36,10 +36,29 @@ void table_init()
 	for(i = 0; i < 128; i++) pred_table[(int)i] = NULL;
 }
 
-int check_pred(/*uint32_t addr, uint32_t pc, int tp*/)
+int check_pred(uint32_t addr, uint32_t pc, int tp)
 {
-	//immplement this whenever
-	return 0;
+	int pred_c; //whether or not the prediction was correct
+	int pred_value; //the prediction of whether or not to branch (0 = don't branch, 1 = branch)
+	int branch_value; //whether or not the program actually branched, the value that will be put in the table
+	unsigned char hash;
+	hash = (addr >> 4) & 0x7f; //index in the hash table, the 7 bits after/including the 4th bits (4-10)
+	
+	if(tp == 0) pred_value = 0; //if we're using prediction method 0, pred_value will always be 0
+	else if(tp == 1){
+		if(pred_table[(int)hash] == NULL) pred_value = 0;
+		else pred_value = pred_table[(int)hash];
+	}
+	
+	if(addr == pc) branch_value = 1;
+	else branch_value = 0;
+	
+	if(tp == 1) pred_table[(int)hash] = branch_value;
+	
+	if(branch_value == pred_value) pred_c = 1;
+	else pred_c = 0;
+	
+	return pred_c;
 }
 
 
@@ -182,6 +201,8 @@ int main(int argc, char **argv)
 		if(!size) tr_entry_2 = &no_op;
 	}
 	
+	if (stall > 0) stall--;
+	
 	tr_pipeline->IFID_first = tr_entry_1;
 	tr_pipeline->IFID_second = tr_entry_2;
 	
@@ -277,8 +298,49 @@ int main(int argc, char **argv)
 	tr_pipeline->WB_ls = tr_pipeline->MEM_ls;
 	tr_pipeline->MEM_alu = tr_pipeline->EX_alu;
 	tr_pipeline->MEM_ls = tr_pipeline->EX_ls;
-	tr_pipeline->EX_alu = tr_pipeline->REG_alu;
-	tr_pipeline->EX_ls = tr_pipeline->REG_ls;
+	
+	if(tr_pipeline->EX_alu->type == ti_BRANCH)
+	{
+		int tr_pred = 1;
+		struct trace_item *tmp_ls;
+		struct trace_item *tmp_alu;
+		tmp_ls = tr_pipeline->REG_ls;
+		tmp_alu = tr_pipeline->REG_alu;
+		if(tmp_ls->type == ti_NOP && tmp_alu->type != ti_NOP)
+		{
+			tr_pred = check_pred(tr_pipeline->EX_alu->Addr, tmp_alu->PC, trace_prediction_on);
+		}
+		else if(tmp_ls->type != ti_NOP && tmp_alu->type == ti_NOP)
+		{
+			tr_pred = check_pred(tr_pipeline->EX_alu->Addr, tmp_ls->PC, trace_prediction_on);
+		}
+		else if((int)tmp_ls->PC < (int)tmp_alu->PC)
+		{
+			tr_pred = check_pred(tr_pipeline->EX_alu->Addr, tmp_ls->PC, trace_prediction_on);
+		}
+		else if((int)tmp_ls->PC > (int)tmp_alu->PC)
+		{
+			tr_pred = check_pred(tr_pipeline->EX_alu->Addr, tmp_alu->PC, trace_prediction_on);
+		}
+		//printf("branch at PC: %x. tr_pred = %d\n", tr_pipeline->EX_alu->PC, tr_pred);
+		if(tr_pred == 0)
+		{
+			stall = 4;
+			tr_pipeline->EX_alu = &squashed;
+			tr_pipeline->EX_ls = &squashed;
+		}
+	}
+	if(stall == 3)
+	{
+		tr_pipeline->EX_alu = &squashed;
+		tr_pipeline->EX_ls = &squashed;
+		stall = 0;
+	}
+	else if (stall <= 2)
+	{
+		tr_pipeline->EX_alu = tr_pipeline->REG_alu;
+		tr_pipeline->EX_ls = tr_pipeline->REG_ls;
+	}
 	
 	struct trace_item *first;
 	first = tr_pipeline->IFID_first;
@@ -287,6 +349,8 @@ int main(int argc, char **argv)
 	struct trace_item *prev;
 	prev = tr_pipeline->REG_ls;
 	
+	if(stall <= 2)
+	{
 	//switch statement to handle movement from IF+ID to REG
 	switch(first->type){
 		//cases on load OR store
@@ -500,7 +564,8 @@ int main(int argc, char **argv)
 		break;
 		
 		//case that first is a branch
-		case ti_BRANCH:
+		case ti_BRANCH: ;
+			int tr_pred = 0;
 			if(prev->type == ti_LOAD)
 			{
 				if(prev->dReg != first->sReg_a && prev->dReg != first->sReg_b)
@@ -528,12 +593,8 @@ int main(int argc, char **argv)
 			tr_pipeline->REG_ls = &no_op;
 			stall = 1;
 		break;
+	  }
 	}
-	
-	
-	//handling of branch prediction
-	
-	
 	
 	if( tr_pipeline->IFID_first->type == ti_NOP && tr_pipeline->IFID_second->type == ti_NOP && tr_pipeline->REG_alu->type == ti_NOP &&  tr_pipeline->EX_alu->type == ti_NOP  &&  tr_pipeline->MEM_alu->type == ti_NOP && tr_pipeline->WB_alu->type == ti_NOP && tr_pipeline->REG_ls->type == ti_NOP && tr_pipeline->EX_ls->type == ti_NOP &&  tr_pipeline->MEM_ls->type == ti_NOP  &&  tr_pipeline->WB_ls->type == ti_NOP )
 	{
