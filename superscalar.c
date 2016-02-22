@@ -301,7 +301,7 @@ int main(int argc, char **argv)
 	
 	if(tr_pipeline->EX_alu->type == ti_BRANCH)
 	{
-		int tr_pred = 1;
+		int tr_pred = 0;
 		struct trace_item *tmp_ls;
 		struct trace_item *tmp_alu;
 		tmp_ls = tr_pipeline->REG_ls;
@@ -330,13 +330,7 @@ int main(int argc, char **argv)
 			tr_pipeline->EX_ls = &squashed;
 		}
 	}
-	if(stall == 3)
-	{
-		tr_pipeline->EX_alu = &squashed;
-		tr_pipeline->EX_ls = &squashed;
-		stall = 0;
-	}
-	else if (stall <= 2)
+	if (stall <= 2)
 	{
 		tr_pipeline->EX_alu = tr_pipeline->REG_alu;
 		tr_pipeline->EX_ls = tr_pipeline->REG_ls;
@@ -462,8 +456,6 @@ int main(int argc, char **argv)
 		//cases of all ALU operations except if the first is a branch
 		case ti_RTYPE:
 		case ti_ITYPE:
-		case ti_JTYPE:
-		case ti_JRTYPE:
 		case ti_SPECIAL:
 			switch(second->type){
 				//first is ALU (not including branch) and second is L/S
@@ -565,7 +557,6 @@ int main(int argc, char **argv)
 		
 		//case that first is a branch
 		case ti_BRANCH: ;
-			int tr_pred = 0;
 			if(prev->type == ti_LOAD)
 			{
 				if(prev->dReg != first->sReg_a && prev->dReg != first->sReg_b)
@@ -588,8 +579,15 @@ int main(int argc, char **argv)
 				stall = 1; //issue first
 			}
 		break;
+		//If the first type is a j-type, a NOP needs to be issued in the Load/Store pipeline
+		case ti_JTYPE:
+		case ti_JRTYPE:
+			tr_pipeline->REG_alu = tr_pipeline->IFID_first;
+			tr_pipeline->REG_ls = &no_op;
+			stall = 1;
+		break;
 		case ti_NOP:
-			tr_pipeline->REG_alu = tr_pipeline->IFID_second;
+			tr_pipeline->REG_alu = tr_pipeline->IFID_first;
 			tr_pipeline->REG_ls = &no_op;
 			stall = 1;
 		break;
