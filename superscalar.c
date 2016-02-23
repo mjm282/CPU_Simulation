@@ -1,3 +1,8 @@
+/*************************************************************
+   Matthew Melchert - mjm282
+   Jessica Mesler - jlm348
+***************************************************************/
+
 #include <stdio.h>
 #include <inttypes.h>
 #include <arpa/inet.h>
@@ -152,12 +157,12 @@ int main(int argc, char **argv)
 	int trace_view_on = 0;
 	int trace_prediction_on = 0; //prediction type value
 	
-	unsigned char t_type = 0;
-    unsigned char t_sReg_a= 0;
-    unsigned char t_sReg_b= 0;
-    unsigned char t_dReg= 0;
-    unsigned int t_PC = 0;
-    unsigned int t_Addr = 0;
+	unsigned char t_type = 0;	
+	unsigned char t_sReg_a= 0;	
+	unsigned char t_sReg_b= 0;	
+	unsigned char t_dReg= 0;
+	unsigned int t_PC = 0;
+	unsigned int t_Addr = 0;
 	
 	unsigned int cycle_number = 0;
 
@@ -211,90 +216,90 @@ int main(int argc, char **argv)
 	
 	//PIPELINED SIMULATION: START
 	//Printing the WB stage of the ALU/Branch pipeline
-	   if (trace_view_on) {/* print the executed instruction if trace_view_on=1 */
-       switch(tr_pipeline->WB_alu->type) {
-         case ti_NOP:
-           printf("[cycle %d] NOP:\n",cycle_number) ;
-           break;
-		 case ti_SQUASHED:
-		   printf("[cycle %d] SQUASHED:\n", cycle_number);
-		   break;
-         case ti_RTYPE:
-           printf("[cycle %d] RTYPE:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->sReg_b, tr_pipeline->WB_alu->dReg);
-           break;
-         case ti_ITYPE:
-           printf("[cycle %d] ITYPE:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->dReg, tr_pipeline->WB_alu->Addr);
-           break;
-         case ti_LOAD:
-           printf("[cycle %d] LOAD:",cycle_number) ;      
-           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->dReg, tr_pipeline->WB_alu->Addr);
-           break;
-         case ti_STORE:
-           printf("[cycle %d] STORE:",cycle_number) ;      
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->sReg_b, tr_pipeline->WB_alu->Addr);
-           break;
-         case ti_BRANCH:
-           printf("[cycle %d] BRANCH:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->sReg_b, tr_pipeline->WB_alu->Addr);
-           break;
-         case ti_JTYPE:
-           printf("[cycle %d] JTYPE:",cycle_number) ;
-           printf(" (PC: %x)(addr: %x)\n", tr_pipeline->WB_alu->PC,tr_pipeline->WB_alu->Addr);
-           break;
-         case ti_SPECIAL:
-           printf("[cycle %d] SPECIAL:\n",cycle_number) ;      	
-           break;
-         case ti_JRTYPE:
-           printf("[cycle %d] JRTYPE:",cycle_number) ;
-           printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->dReg, tr_pipeline->WB_alu->Addr);
-           break;
-       }
-     }
+        if (trace_view_on) {/* print the executed instruction if trace_view_on=1 */
+           switch(tr_pipeline->WB_alu->type) {
+               case ti_NOP:
+               printf("[cycle %d] NOP:\n",cycle_number) ;
+               break;
+             case ti_SQUASHED:
+               printf("[cycle %d] SQUASHED:\n", cycle_number);
+               break;
+             case ti_RTYPE:
+               printf("[cycle %d] RTYPE:",cycle_number) ;
+               printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->sReg_b, tr_pipeline->WB_alu->dReg);
+               break;
+             case ti_ITYPE:
+               printf("[cycle %d] ITYPE:",cycle_number) ;
+               printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->dReg, tr_pipeline->WB_alu->Addr);
+               break;
+             case ti_LOAD:
+               printf("[cycle %d] LOAD:",cycle_number) ;      
+               printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->dReg, tr_pipeline->WB_alu->Addr);
+               break;
+             case ti_STORE:
+               printf("[cycle %d] STORE:",cycle_number) ;      
+               printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->sReg_b, tr_pipeline->WB_alu->Addr);
+               break;
+             case ti_BRANCH:
+               printf("[cycle %d] BRANCH:",cycle_number) ;
+               printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->sReg_a, tr_pipeline->WB_alu->sReg_b, tr_pipeline->WB_alu->Addr);
+               break;
+             case ti_JTYPE:
+               printf("[cycle %d] JTYPE:",cycle_number) ;
+               printf(" (PC: %x)(addr: %x)\n", tr_pipeline->WB_alu->PC,tr_pipeline->WB_alu->Addr);
+               break;
+             case ti_SPECIAL:
+               printf("[cycle %d] SPECIAL:\n",cycle_number) ;      	
+               break;
+             case ti_JRTYPE:
+               printf("[cycle %d] JRTYPE:",cycle_number) ;
+               printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_pipeline->WB_alu->PC, tr_pipeline->WB_alu->dReg, tr_pipeline->WB_alu->Addr);
+               break;
+           }
+        }
 	 
 	   //printing the WB stage of the Load/Save pipeline
-	   if (trace_view_on) {/* print the executed instruction if trace_view_on=1 */
-       switch(tr_pipeline->WB_ls->type) {
-         case ti_NOP:
-           printf("[cycle %d] NOP:\n",cycle_number) ;
-           break;
-		 case ti_SQUASHED:
-		   printf("[cycle %d] SQUASHED:\n", cycle_number);
-		   break;
-         case ti_RTYPE:
-           printf("[cycle %d] RTYPE:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->sReg_b, tr_pipeline->WB_ls->dReg);
-           break;
-         case ti_ITYPE:
-           printf("[cycle %d] ITYPE:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->dReg, tr_pipeline->WB_ls->Addr);
-           break;
-         case ti_LOAD:
-           printf("[cycle %d] LOAD:",cycle_number) ;      
-           printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->dReg, tr_pipeline->WB_ls->Addr);
-           break;
-         case ti_STORE:
-           printf("[cycle %d] STORE:",cycle_number) ;      
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->sReg_b, tr_pipeline->WB_ls->Addr);
-           break;
-         case ti_BRANCH:
-           printf("[cycle %d] BRANCH:",cycle_number) ;
-           printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->sReg_b, tr_pipeline->WB_ls->Addr);
-           break;
-         case ti_JTYPE:
-           printf("[cycle %d] JTYPE:",cycle_number) ;
-           printf(" (PC: %x)(addr: %x)\n", tr_pipeline->WB_ls->PC,tr_pipeline->WB_ls->Addr);
-           break;
-         case ti_SPECIAL:
-           printf("[cycle %d] SPECIAL:\n",cycle_number) ;      	
-           break;
-         case ti_JRTYPE:
-           printf("[cycle %d] JRTYPE:",cycle_number) ;
-           printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->dReg, tr_pipeline->WB_ls->Addr);
-           break;
-       }
-     }
+	if (trace_view_on) {/* print the executed instruction if trace_view_on=1 */
+           switch(tr_pipeline->WB_ls->type) {
+             case ti_NOP:
+               printf("[cycle %d] NOP:\n",cycle_number) ;
+               break;
+             case ti_SQUASHED:
+               printf("[cycle %d] SQUASHED:\n", cycle_number);
+               break;
+             case ti_RTYPE:
+               printf("[cycle %d] RTYPE:",cycle_number) ;
+               printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(dReg: %d) \n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->sReg_b, tr_pipeline->WB_ls->dReg);
+               break;
+             case ti_ITYPE:
+               printf("[cycle %d] ITYPE:",cycle_number) ;
+               printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->dReg, tr_pipeline->WB_ls->Addr);
+               break;
+             case ti_LOAD:
+               printf("[cycle %d] LOAD:",cycle_number) ;      
+               printf(" (PC: %x)(sReg_a: %d)(dReg: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->dReg, tr_pipeline->WB_ls->Addr);
+               break;
+             case ti_STORE:
+               printf("[cycle %d] STORE:",cycle_number) ;      
+               printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->sReg_b, tr_pipeline->WB_ls->Addr);
+               break;
+             case ti_BRANCH:
+               printf("[cycle %d] BRANCH:",cycle_number) ;
+               printf(" (PC: %x)(sReg_a: %d)(sReg_b: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->sReg_a, tr_pipeline->WB_ls->sReg_b, tr_pipeline->WB_ls->Addr);
+               break;
+             case ti_JTYPE:
+               printf("[cycle %d] JTYPE:",cycle_number) ;
+               printf(" (PC: %x)(addr: %x)\n", tr_pipeline->WB_ls->PC,tr_pipeline->WB_ls->Addr);
+               break;
+             case ti_SPECIAL:
+               printf("[cycle %d] SPECIAL:\n",cycle_number) ;      	
+               break;
+             case ti_JRTYPE:
+               printf("[cycle %d] JRTYPE:",cycle_number) ;
+               printf(" (PC: %x) (sReg_a: %d)(addr: %x)\n", tr_pipeline->WB_ls->PC, tr_pipeline->WB_ls->dReg, tr_pipeline->WB_ls->Addr);
+               break;
+           }
+        }
 	
 	//EX->MEM->WB push happens no matter what, pushes all of them along
 	tr_pipeline->WB_alu = tr_pipeline->MEM_alu;
@@ -349,7 +354,7 @@ int main(int argc, char **argv)
 	if(stall <= 2)
 	{
 	//switch statement to handle movement from IF+ID to REG
-	switch(first->type){
+	    switch(first->type){
 		//cases on load OR store
 		case ti_LOAD:
 		case ti_STORE:
@@ -554,9 +559,9 @@ int main(int argc, char **argv)
 						tr_pipeline->REG_ls = &no_op;
 						stall = 1; //issue first
 					}
-				break;
+					break;
 			}
-		break;
+			break;
 		
 		//case that first is a branch
 		case ti_BRANCH: ;
@@ -581,26 +586,26 @@ int main(int argc, char **argv)
 				tr_pipeline->REG_ls = &no_op;
 				stall = 1; //issue first
 			}
-		break;
+			break;
 		//If the first type is a j-type, a NOP needs to be issued in the Load/Store pipeline
 		case ti_JTYPE:
 		case ti_JRTYPE:
 			tr_pipeline->REG_alu = tr_pipeline->IFID_first;
 			tr_pipeline->REG_ls = &no_op;
 			stall = 1;
-		break;
+			break;
 		case ti_NOP:
 			tr_pipeline->REG_alu = tr_pipeline->IFID_first;
 			tr_pipeline->REG_ls = &no_op;
 			stall = 1;
-		break;
-	  }
+			break;
+	    }
 	}
 	
 	if( tr_pipeline->IFID_first->type == ti_NOP && tr_pipeline->IFID_second->type == ti_NOP && tr_pipeline->REG_alu->type == ti_NOP &&  tr_pipeline->EX_alu->type == ti_NOP  &&  tr_pipeline->MEM_alu->type == ti_NOP && tr_pipeline->WB_alu->type == ti_NOP && tr_pipeline->REG_ls->type == ti_NOP && tr_pipeline->EX_ls->type == ti_NOP &&  tr_pipeline->MEM_ls->type == ti_NOP  &&  tr_pipeline->WB_ls->type == ti_NOP )
 	{
 		printf("+ Simulation terminates at cycle : %u\n", cycle_number);
-      	break;
+      		break;
 	}
 	}
 	trace_uninit();
