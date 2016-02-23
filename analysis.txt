@@ -1,5 +1,6 @@
 Analysis of Simulation
-
+Matthew Melchert - mjm282
+Jessica Mesler - jlm348
 *************************************************************Short Traces:*******************************************************************
 sample.tr
 	Single-Cycle:  1000 cycles
@@ -58,3 +59,8 @@ sample_large3.tr
 	5-Stage Pipeline (prediction table): 104920486
 	Superscalar Pipeline (predict not taken): 100325993
 	Superscalar Pipeline (prediction table): 94579012
+	
+Analysis:
+In every case, the presence of the prediction table lowered the amount of cycles needed to complete the instructions.  
+In almost every case, the presence of the superscalar pipeline lowered the amount of cycles needed to complete.  Sample_3 experienced a very slight increase between the 5-stage pipeline predicting not taken and the superscalar pipeline predicting the same.  
+Although many of the traaces need more cycles to complete with a pipeline as opposed to single cycle, this is negated by the fact that the cycle time of the pipeline is much smaller than the single cycle.  
